@@ -4,7 +4,9 @@ from dataplattform.cli.helper import (
     find_file,
     resovle_cloudformation_imports,
     serverless_environment,
-    assume_serverless_role)
+    assume_serverless_role,
+    assume_serverless_role2,
+    assume_serverless_role3)
 from os import environ
 from dataplattform.testing.events import APIGateway
 from importlib.util import spec_from_file_location, module_from_spec
@@ -37,8 +39,8 @@ def run(args: Namespace, _):
             args.event = '{}'
 
     config = load_serverless_config('functions')
-    handlers = [(c['handler'], c['environment']) for c in config.values()]
-    runners = [prepare_runner(handler, env, args) for handler, env in handlers]
+    handlers = [(c['handler'], c['environment'], c['role']) for c in config.values()]
+    runners = [prepare_runner(handler, env, role, args) for handler, env, role in handlers]
 
     def run_lambdas_with_queue(ingest, process):
         ingest_run, ingest_env = ingest
@@ -83,7 +85,7 @@ def run(args: Namespace, _):
         return
 
 
-def prepare_runner(handler: str, environment: Dict[str, str], args: Namespace):
+def prepare_runner(handler: str, environment: Dict[str, str], role: str, args: Namespace):
     handler_file, handler_func = handler.split('.')
 
     def setup_env():
@@ -101,7 +103,7 @@ def prepare_runner(handler: str, environment: Dict[str, str], args: Namespace):
         handler_module = module_from_spec(spec)
         spec.loader.exec_module(handler_module)
 
-        with assume_serverless_role():
+        with assume_serverless_role3(role):
             if args.profile:
                 tracemalloc.start()
                 start_time = time()

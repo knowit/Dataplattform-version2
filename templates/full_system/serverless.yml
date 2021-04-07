@@ -68,7 +68,7 @@ functions:
       - !ImportValue ${self:custom.stage}-pandasDepLayer-arn
     name: ${self:custom.stage}-${self:service}-ingest # Always begin name with stage
     description: ${self:custom.editable.description}
-    role: !GetAtt IngestLambdaRole.Arn
+    role: IngestLambdaRole
     package:
       include:
         - '*.py' # Files to include in deployment
@@ -94,10 +94,7 @@ functions:
     handler: ${self:custom.editable.processHandlerFile}.handler
     events: # The Events that trigger this Function
       - sqs: 
-          arn:
-            Fn::GetAtt:
-              - EventQueue
-              - Arn
+          arn: !GetAtt EventQueue.Arn
           batchSize: 1
   
     layers:
@@ -106,7 +103,7 @@ functions:
       - !ImportValue ${self:custom.stage}-pandasDepLayer-arn
     name: ${self:custom.stage}-${self:service}-process # Always begin name with stage
     description: ${self:custom.editable.description}
-    role: !GetAtt ProcessLambdaRole.Arn
+    role: ProcessLambdaRole
     package:
       include:
         - '*.py' # Files to include in deployment
@@ -125,7 +122,7 @@ resources: # The resources your functions use
     IngestLambdaRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: ${self:custom.stage}-${self:service}-${self:custom.editable.ingestHandlerFile}-role
+        RoleName: ${self:custom.stage}-${self:service}-ingest-role
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -167,7 +164,7 @@ resources: # The resources your functions use
     ProcessLambdaRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: ${self:custom.stage}-${self:service}-${self:custom.editable.processHandlerFile}-role
+        RoleName: ${self:custom.stage}-${self:service}-process-role
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -243,7 +240,7 @@ resources: # The resources your functions use
         QueueName: ${self:custom.sqsQueueDLName}
         ContentBasedDeduplication: true #Assume all message bodies are unique, by design given as an uuid1
 
-  Outputs: # The outputs that your AWS CloudFormation Stack should produce. This allows references between services.
+  # Outputs: # The outputs that your AWS CloudFormation Stack should produce. This allows references between services.
 
 plugins:
   - serverless-python-requirements
